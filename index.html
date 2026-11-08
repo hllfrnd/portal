@@ -16,7 +16,9 @@
     const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const dark = saved ? saved === 'dark' : sysDark;
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-  }catch(e){}
+  }catch(e){
+    document.documentElement.setAttribute('data-theme','dark');
+  }
 })();
 </script>
 <style>
@@ -65,14 +67,30 @@ body{
   transition:background-color .4s ease,color .4s ease;
   animation:fadeIn 1.2s ease-out both;
 }
+
+/* === Унифицированный переключатель темы === */
 .theme-toggle{
-  position:absolute;top:1rem;right:1rem;background:transparent;
-  border:1px solid var(--hint-border);color:var(--fg);border-radius:50%;
-  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:1.15rem;transition:all .2s ease;z-index:100;
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  position:absolute;
+  top:calc(1rem + env(safe-area-inset-top, 0px));
+  right:calc(1rem + env(safe-area-inset-right, 0px));
+  width:40px;height:40px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--hint-bg);
+  border:1px solid var(--hint-border);
+  color:var(--fg);
+  border-radius:50%;
+  font-size:1.05rem;line-height:1;
+  cursor:pointer;
+  z-index:100;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .2s ease;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
-.theme-toggle:hover{background:var(--hint-bg);border-color:var(--fg)}
+.theme-toggle:hover{background:var(--bg);border-color:var(--fg)}
+.theme-toggle:active{transform:scale(.94)}
+.theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
 .symbol{
   display:inline-flex;align-items:center;justify-content:center;width:96px;height:96px;
   margin-bottom:1rem;padding:0;font-size:3rem;line-height:1;color:var(--accent);
@@ -151,7 +169,7 @@ h1{
 </head>
 <body>
 
-<button type="button" class="theme-toggle" id="themeToggle" aria-label="Переключить тему">🌙</button>
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Переключить тему" aria-pressed="false">◐</button>
 
 <button type="button" class="symbol" id="magicSymbol" aria-label="Открыть случайную ссылку">☉</button>
 <h1>Hello Friend</h1>
@@ -184,17 +202,20 @@ h1{
 (() => {
 "use strict";
 
+// === Унифицированный переключатель темы ===
 const themeToggle = document.getElementById('themeToggle');
-const applyThemeIcon = () => {
-  themeToggle.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+const applyTheme = () => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  themeToggle.textContent = dark ? '◑' : '◐';
+  themeToggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
+  themeToggle.setAttribute('aria-label', dark ? 'Включить светлую тему' : 'Включить тёмную тему');
 };
-applyThemeIcon();
+applyTheme();
 themeToggle.addEventListener('click', () => {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const next = isDark ? 'light' : 'dark';
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
-  try{ localStorage.setItem('theme', next); }catch(e){}
-  applyThemeIcon();
+  try { localStorage.setItem('theme', next); } catch (e) {}
+  applyTheme();
 });
 
 const rawLinks = [
